@@ -13,28 +13,41 @@ public class AuthController {
     @Autowired
     private UserRepository userRepository;
 
-    @PostMapping("/login")
+ @PostMapping("/login")
 public ResponseEntity<?> login(@RequestBody User loginData) {
-    User found = userRepository.findByUsernameAndPassword(
-        loginData.getUsername(),
-        loginData.getPassword()
-    );
-
-    if (found != null) {
-        return ResponseEntity.ok().body(
-            java.util.Map.of(
-                "status", "verified",
-                "profession", found.getProfession()
-            )
+    try {
+        User found = userRepository.findByUsernameAndPassword(
+            loginData.getUsername(),
+            loginData.getPassword()
         );
-    } else {
-        return ResponseEntity.status(401).body(
+
+        if (found != null) {
+            return ResponseEntity.ok().body(
+                java.util.Map.of(
+                    "status", "verified",
+                    "profession", found.getProfession()
+                )
+            );
+        } else {
+            return ResponseEntity.status(401).body(
+                java.util.Map.of(
+                    "status", "invalid"
+                )
+            );
+        }
+    } catch (Exception e) {
+        // Log the real error to Railway logs / console
+        e.printStackTrace();
+
+        return ResponseEntity.status(500).body(
             java.util.Map.of(
-                "status", "invalid"
+                "status", "error",
+                "message", "Login failed: " + e.getMessage()
             )
         );
     }
 }
+
 
     @PostMapping("/signup")
 public String signup(@RequestBody User newUser) {
