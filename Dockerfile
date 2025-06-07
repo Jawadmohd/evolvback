@@ -1,13 +1,25 @@
-FROM eclipse-temurin:17-jdk
+# ---- Stage 1: Build the application ----
+FROM maven:3.9.6-eclipse-temurin-17 AS builder
 
-# Set working directory inside container
 WORKDIR /app
 
-# Copy the built JAR from target folder to container
-COPY target/*.jar app.jar
+# Copy pom and src
+COPY pom.xml .
+COPY src ./src
 
-# Expose port 8080
+# Build the application
+RUN mvn clean package -DskipTests
+
+# ---- Stage 2: Run the application ----
+FROM eclipse-temurin:17-jdk
+
+WORKDIR /app
+
+# Copy the built jar from the previous stage
+COPY --from=builder /app/target/*.jar app.jar
+
+# Expose port
 EXPOSE 8080
 
-# Command to run your Spring Boot app
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Use dynamic port for Railway
+ENTRYPOINT ["java", "-jar", "app.jar", "--server.port=${PORT}"]
